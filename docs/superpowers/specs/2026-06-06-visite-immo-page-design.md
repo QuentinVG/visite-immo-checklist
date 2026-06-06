@@ -61,6 +61,15 @@ Le parcours avance étape par étape, dans l'ordre exact du déroulé de visite 
 
 Chaque étape affiche une consigne courte, les champs à remplir, les questions à poser si nécessaire, puis les boutons précédent et suivant. Les grosses sections peuvent être découpées en sous-écrans pour garder 3 à 8 champs visibles à la fois, mais la numérotation et le contenu restent alignés sur les 15 sections d'origine. L'utilisateur peut revenir en arrière sans perdre les réponses.
 
+Le parcours guidé reste le mode principal, mais la visite ne dépend pas d'un ordre réel parfait. Une navigation rapide doit permettre de sauter facilement vers n'importe quelle étape si le vendeur commence par le jardin, l'étage, le garage ou les questions administratives. Cette navigation prend la forme d'un bouton `Étapes` toujours accessible, ouvrant un sommaire compact avec :
+
+- le numéro et le titre de chaque section ;
+- un indicateur `vide`, `en cours` ou `rempli` ;
+- un badge `critique` pour les sections qui peuvent bloquer la décision ;
+- un retour immédiat à l'étape en cours.
+
+Changer d'étape par le sommaire ne doit jamais effacer les réponses. La page doit aussi proposer un bouton `Reprendre où j'étais` pour revenir au dernier écran consulté.
+
 ## Contenu Et Anonymisation
 
 Le contenu reprend le fond du déroulé fourni, mais remplace les éléments identifiants :
@@ -205,6 +214,7 @@ L'interface doit être sobre, dense et pratique :
 - Contraste fort pour usage en extérieur.
 - Barre de progression persistante.
 - Navigation précédent / suivant stable.
+- Bouton `Étapes` toujours accessible pour naviguer hors ordre pendant la visite.
 - Sections critiques visuellement distinctes.
 - Aucun texte marketing.
 - Aucun élément décoratif inutile.
@@ -217,6 +227,7 @@ La vérification doit couvrir :
 
 - Ouverture locale de la page.
 - Navigation complète entre les étapes.
+- Navigation directe vers une étape hors ordre sans perte de données.
 - Autosauvegarde après rechargement.
 - Champs texte critiques conservés.
 - Calcul de moyenne.
@@ -234,6 +245,7 @@ Une vérification visuelle mobile et desktop doit être faite avant livraison.
 - La page est accessible gratuitement via GitHub Pages.
 - La page ne contient aucune donnée personnelle ou localisée identifiable.
 - L'utilisateur peut remplir la visite en avançant étape par étape.
+- L'utilisateur peut sauter rapidement à une autre étape si la visite ne suit pas l'ordre prévu.
 - Les points critiques ont des champs texte libres visibles ou très rapides à ouvrir.
 - Les réponses sont conservées après rechargement.
 - L'export ChatGPT est structuré, complet, anonymisé et exigeant.
