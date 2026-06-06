@@ -1,0 +1,7 @@
+node_modules/
+playwright-report/
+test-results/
+.tmp-*.spec.js
+smoke.spec.js
+tests/smoke.spec.js
+tests/smoke-browser.mjs
