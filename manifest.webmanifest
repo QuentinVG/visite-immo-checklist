@@ -1,0 +1,11 @@
+{
+  "name": "Checklist visite immobilière",
+  "short_name": "Visite immo",
+  "description": "Checklist de visite immobilière anonymisée, locale et exportable.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f7fb",
+  "theme_color": "#0f172a",
+  "icons": []
+}

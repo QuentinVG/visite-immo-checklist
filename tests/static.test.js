@@ -19,3 +19,19 @@ test('stylesheet includes mobile controls and print support', () => {
   assert.match(css, /\.choice-grid/);
   assert.match(css, /@media print/);
 });
+
+test('service worker caches every static app asset', () => {
+  const sw = readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
+
+  for (const asset of ['index.html', 'styles.css', 'app.js', 'data.js', 'logic.js', 'manifest.webmanifest']) {
+    assert.match(sw, new RegExp(asset.replace('.', '\\.')));
+  }
+});
+
+test('README documents local-only storage and GitHub Pages usage', () => {
+  const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
+
+  assert.match(readme, /GitHub Pages/);
+  assert.match(readme, /localStorage/);
+  assert.match(readme, /Copier pour ChatGPT/);
+});
