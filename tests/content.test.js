@@ -44,3 +44,17 @@ test('scoring criteria match the strict decision rules', () => {
     'preference_autre_bien',
   ]);
 });
+
+test('factual administrative yes answers are not automatic red flags', () => {
+  assert.notEqual(getOption('ordre_arrivee_offres', 'oui').severity, 'red');
+  assert.notEqual(getOption('residence_principale_obligation', 'oui').severity, 'red');
+  assert.notEqual(getOption('asl_copro_charges', 'oui').severity, 'red');
+});
+
+function getOption(fieldId, value) {
+  const field = sections.flatMap((section) => section.fields).find((candidate) => candidate.id === fieldId);
+  assert.ok(field, `Missing field ${fieldId}`);
+  const option = field.options.find((candidate) => candidate.value === value);
+  assert.ok(option, `Missing option ${value} on ${fieldId}`);
+  return option;
+}

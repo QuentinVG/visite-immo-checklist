@@ -22,6 +22,16 @@ const yesNoGoodNo = [
   { value: 'non', label: 'Non' },
 ];
 
+const yesWarnNo = [
+  { value: 'oui', label: 'Oui', severity: 'warning' },
+  { value: 'non', label: 'Non' },
+];
+
+const neutralYesNo = [
+  { value: 'oui', label: 'Oui' },
+  { value: 'non', label: 'Non' },
+];
+
 const yesBofNo = [
   { value: 'oui', label: 'Oui' },
   { value: 'bof', label: 'Bof', severity: 'warning' },
@@ -391,9 +401,9 @@ export const sections = [
     intro: "Attends la fin. Ne fais pas un interrogatoire avant d'avoir vu le bien, mais ne repars pas sans les réponses clés.",
     fields: [
       { id: 'date_limite_offre', type: 'text', label: "Date limite pour déposer une offre", placeholder: 'Date / heure / flou', important: true },
-      { id: 'ordre_arrivee_offres', type: 'choice', label: "Offres traitées dans l'ordre d'arrivée ?", required: true, options: yesNoGoodNo },
+      { id: 'ordre_arrivee_offres', type: 'choice', label: "Offres traitées dans l'ordre d'arrivée ?", required: true, options: neutralYesNo },
       { id: 'analyse_date_commune', type: 'choice', label: 'Toutes les offres analysées après une date commune ?', required: true, options: yesNo('warning') },
-      { id: 'residence_principale_obligation', type: 'choice', label: "Obligation d'occupation en résidence principale ?", required: true, options: yesNoGoodNo },
+      { id: 'residence_principale_obligation', type: 'choice', label: "Obligation d'occupation en résidence principale ?", required: true, options: yesWarnNo },
       { id: 'duree_occupation', type: 'text', label: "Durée minimale d'occupation", placeholder: 'Durée / aucune / flou', important: true },
       { id: 'clause_anti_speculation', type: 'choice', label: 'Clause anti-spéculation ?', required: true, options: yesNoGoodNo },
       { id: 'prix_revente_encadre', type: 'choice', label: 'Prix de revente encadré ?', required: true, options: yesNoGoodNo },
@@ -407,7 +417,7 @@ export const sections = [
         placeholder: 'Ce qui bloque, ce qui est écrit, ce qui reste verbal.',
         important: true,
       },
-      { id: 'asl_copro_charges', type: 'choice', label: 'ASL / copropriété horizontale / charges ?', required: true, options: yesNoGoodNo },
+      { id: 'asl_copro_charges', type: 'choice', label: 'ASL / copropriété horizontale / charges ?', required: true, options: yesWarnNo },
       { id: 'montant_charges_annuel', type: 'text', label: 'Montant annuel exact des charges', placeholder: 'Montant / inconnu', important: true },
       { id: 'reglement_lotissement', type: 'choice', label: 'Règlement de lotissement disponible ?', required: true, options: yesNo('warning') },
       { id: 'travaux_frais_communs', type: 'choice', label: 'Travaux ou frais communs prévus ?', required: true, options: yesNoGoodNo },
