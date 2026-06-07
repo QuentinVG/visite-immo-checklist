@@ -1,4 +1,4 @@
-const CACHE_NAME = 'visite-immo-checklist-v2';
+const CACHE_NAME = 'visite-immo-checklist-v3';
 const ASSETS = [
   './',
   './index.html',

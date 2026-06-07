@@ -202,6 +202,12 @@ blockquote {
   padding: 0;
 }
 
+.quick-panel.in-modal {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
 .quick-head {
   display: flex;
   align-items: center;
@@ -223,6 +229,58 @@ blockquote {
 .quick-panel p,
 .photo-panel p {
   margin-bottom: 0;
+}
+
+.quick-status {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  padding: 10px;
+}
+
+.quick-status strong,
+.quick-status p {
+  grid-column: 1 / -1;
+}
+
+.quick-status strong {
+  font-size: 1.05rem;
+}
+
+.quick-status span {
+  border-radius: 8px;
+  background: #eef2f7;
+  padding: 8px;
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 850;
+  text-align: center;
+}
+
+.quick-status.stop,
+.quick-trigger.stop {
+  border-color: #fecdd3;
+  background: var(--red-bg);
+  color: var(--red);
+}
+
+.quick-status.pause,
+.quick-trigger.pause,
+.quick-status.incomplete,
+.quick-trigger.incomplete {
+  border-color: #fde68a;
+  background: var(--amber-bg);
+  color: var(--amber);
+}
+
+.quick-status.go,
+.quick-trigger.go {
+  border-color: #99f6e4;
+  background: #ecfdf5;
+  color: var(--accent-dark);
 }
 
 .fields.compact {
@@ -250,7 +308,7 @@ blockquote {
   top: 0;
   z-index: 20;
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: auto 1fr auto auto auto;
   gap: 8px;
   align-items: center;
   margin: -12px -12px 12px;
@@ -267,6 +325,8 @@ blockquote {
 .topbar .step-button {
   min-height: 40px;
   padding: 8px 10px;
+  font-size: 0.82rem;
+  white-space: nowrap;
 }
 
 .progress-track {
@@ -445,7 +505,7 @@ textarea {
   left: 0;
   z-index: 30;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
   border-top: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.96);
@@ -457,7 +517,12 @@ textarea {
   min-width: 0;
   min-height: 44px;
   padding: 8px 6px;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.quick-dialog .fields.compact {
+  margin-top: 2px;
 }
 
 .modal-backdrop {
@@ -585,6 +650,16 @@ textarea {
 .decision.go {
   border-color: #99f6e4;
   background: #ecfdf5;
+}
+
+.decision.incomplete {
+  border-color: #d7dee8;
+  background: #f8fafc;
+}
+
+.summary-mini-actions {
+  display: grid;
+  margin-top: 10px;
 }
 
 .issue-list {

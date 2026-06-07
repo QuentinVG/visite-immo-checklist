@@ -78,6 +78,46 @@ test('debrief captures colleague price and cold buy opinion separately', () => {
   const fields = sections.flatMap((section) => section.fields);
   assert.ok(fields.find((field) => field.id === 'prix_max_collegue'));
   assert.ok(fields.find((field) => field.id === 'collegue_acheterait'));
+  assert.ok(fields.find((field) => field.id === 'regret_minimise_6_mois'));
+});
+
+test('written proof fields separate verbal reassurance from received evidence', () => {
+  const fields = sections.flatMap((section) => section.fields);
+  const proofPairs = [
+    'diagnostics',
+    'taxe_fonciere',
+    'charges_asl',
+    'reglement_lotissement',
+    'clauses_revente_location',
+    'entretien_chaudiere',
+    'factures_energie',
+    'sinistres_infiltrations',
+  ];
+
+  for (const item of proofPairs) {
+    assert.ok(fields.find((field) => field.id === `preuve_oral_${item}`), `missing oral proof ${item}`);
+    assert.ok(fields.find((field) => field.id === `preuve_ecrit_${item}`), `missing written proof ${item}`);
+  }
+});
+
+test('final decision keeps cash, comparison, and anti-panic guardrails visible', () => {
+  const fields = sections.flatMap((section) => section.fields);
+
+  for (const id of [
+    'cash_imprevus',
+    'cash_total_prevoir',
+    'comparaison_surface',
+    'comparaison_dette',
+    'comparaison_apport_conserve',
+    'comparaison_patrimoine',
+    'decision_demain_matin',
+  ]) {
+    assert.ok(fields.find((field) => field.id === id), `missing ${id}`);
+  }
+
+  const decision = sections.find((section) => section.id === 'decision_scenario');
+  assert.ok(decision.reminders.some((item) => item.includes('opportunité rare')));
+  assert.ok(decision.reminders.some((item) => item.includes('Décision interdite')));
 });
 
 function getOption(fieldId, value) {

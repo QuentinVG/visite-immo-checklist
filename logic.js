@@ -101,6 +101,62 @@ export function getSummary(sections, scoringCriteria, state) {
   };
 }
 
+export function getQuickVerdict(state) {
+  const ids = [
+    'quick_bruit_voisinage',
+    'quick_mitoyennete_sejour',
+    'quick_mitoyennete_chambres',
+    'quick_humidite_odeur',
+    'quick_facade_eaux',
+    'quick_chaudiere',
+    'quick_charges',
+    'quick_clauses',
+    'quick_offre',
+    'quick_preference_autre_bien',
+  ];
+
+  const values = ids.map((id) => state?.answers?.[id] ?? '');
+  const counts = {
+    bad: values.filter((value) => value === 'mauvais').length,
+    doubt: values.filter((value) => value === 'doute').length,
+    missing: values.filter((value) => value === '').length,
+  };
+
+  if (counts.bad > 0) {
+    return {
+      level: 'stop',
+      label: 'Stop provisoire',
+      reason: "Un point rapide est mauvais : pas d'offre sans preuve ou clarification.",
+      counts,
+    };
+  }
+
+  if (counts.doubt > 0) {
+    return {
+      level: 'pause',
+      label: 'Temporiser',
+      reason: 'Un ou plusieurs doutes doivent être levés avant décision.',
+      counts,
+    };
+  }
+
+  if (counts.missing > 0) {
+    return {
+      level: 'incomplete',
+      label: 'Incomplet',
+      reason: 'Tous les 10 points rapides ne sont pas encore renseignés.',
+      counts,
+    };
+  }
+
+  return {
+    level: 'go',
+    label: 'Rapide OK',
+    reason: "Aucun mauvais point ni doute dans le mode rapide. Le verdict complet reste nécessaire pour confirmer une offre.",
+    counts,
+  };
+}
+
 export function collectRedFlags(sections, state) {
   return collectFieldIssues(sections, state, 'red');
 }
@@ -133,6 +189,7 @@ export function collectMissingCritical(sections, state) {
 
 export function generateChatGptExport(sections, scoringCriteria, state) {
   const summary = getSummary(sections, scoringCriteria, state);
+  const quick = getQuickVerdict(state);
   const lines = [
     'Voici mes notes anonymisées de visite immobilière.',
     'Sois critique, honnête et exigeant.',
@@ -145,6 +202,17 @@ export function generateChatGptExport(sections, scoringCriteria, state) {
     `Raison: ${summary.decision.reason}`,
     `Moyenne: ${summary.average === null ? 'incomplète' : `${summary.average}/10`}`,
     `Progression: ${summary.progress.answered}/${summary.progress.total} (${summary.progress.percent}%)`,
+    '',
+    '## Verdict rapide',
+    `Signal: ${quick.label}`,
+    `Raison: ${quick.reason}`,
+    `Mauvais: ${quick.counts.bad}`,
+    `Doutes: ${quick.counts.doubt}`,
+    `Non renseignés: ${quick.counts.missing}`,
+    '',
+    '## Preuves écrites',
+    "Règle: pas écrit = pas sécurisé.",
+    ...formatWrittenProof(sections, state),
     '',
     '## Red flags',
     ...formatIssues(summary.redFlags),
@@ -372,6 +440,15 @@ function getScaleSeverity(field, value) {
   }
 
   return null;
+}
+
+function formatWrittenProof(sections, state) {
+  const proofFields = getAllFields(sections).filter((field) => field.id.startsWith('preuve_'));
+  if (proofFields.length === 0) {
+    return ['- Aucune preuve écrite suivie dans cette version.'];
+  }
+
+  return proofFields.map((field) => `- ${field.label}: ${formatAnswer(field, state?.answers?.[field.id])}`);
 }
 
 function formatIssues(issues) {

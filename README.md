@@ -11,7 +11,7 @@ https://quentinvg.github.io/visite-immo-checklist/
 ## Utilisation
 
 1. Ouvrir la page avant la visite pour charger les fichiers.
-2. Utiliser le `Mode rapide` si la visite est groupée ou trop courte : les 10 points bloquants passent avant le reste.
+2. Utiliser `10 points` si la visite est groupée ou trop courte : ce mode reste accessible depuis l'accueil, la barre haute, la barre basse et la synthèse.
 3. Remplir les étapes dans l'ordre ou utiliser le bouton `Étapes` si la visite ne suit pas le déroulé prévu.
 4. Ouvrir `Photos` pour cocher les preuves à prendre pendant la visite.
 5. Laisser les réponses s'enregistrer automatiquement dans `localStorage`.
@@ -20,7 +20,9 @@ https://quentinvg.github.io/visite-immo-checklist/
 ## Décision
 
 - Un champ `Bloquant immédiat ?` marqué oui stoppe la décision, même avec une bonne moyenne.
+- Le verdict rapide protège pendant la visite : mauvais = stop provisoire, doute = temporiser, incomplet = ne pas conclure.
 - Les champs critiques ou importants non remplis empêchent une offre ferme.
+- Les preuves orales sont séparées des preuves écrites : pas écrit = pas sécurisé.
 - Les notes sont volontairement exigeantes : un point flou doit être prouvé, pas rationalisé.
 - L'impression PDF génère le rapport complet avec le mode rapide, les photos, les réponses et les notes.
 

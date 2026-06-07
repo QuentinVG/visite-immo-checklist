@@ -4,6 +4,7 @@ import { sections, scoringCriteria } from '../data.js';
 import {
   createInitialState,
   updateAnswer,
+  getQuickVerdict,
   getProgress,
   getSectionStatus,
   getSummary,
@@ -83,6 +84,45 @@ test('immediate blocker field stops the decision regardless of score', () => {
   assert.match(summary.decision.reason, /bloquant immédiat/);
 });
 
+test('quick verdict gives a usable visit signal before the full checklist is complete', () => {
+  let state = createInitialState(sections, scoringCriteria);
+  state = updateAnswer(state, 'quick_bruit_voisinage', 'ok');
+  state = updateAnswer(state, 'quick_mitoyennete_sejour', 'doute');
+  state = updateAnswer(state, 'quick_humidite_odeur', 'mauvais');
+
+  const quick = getQuickVerdict(state);
+
+  assert.equal(quick.counts.bad, 1);
+  assert.equal(quick.counts.doubt, 1);
+  assert.equal(quick.counts.missing, 7);
+  assert.equal(quick.level, 'stop');
+  assert.match(quick.label, /Stop provisoire/);
+});
+
+test('quick verdict separates incomplete, temporary, and ok states', () => {
+  let state = createInitialState(sections, scoringCriteria);
+  assert.equal(getQuickVerdict(state).level, 'incomplete');
+
+  for (const id of [
+    'quick_bruit_voisinage',
+    'quick_mitoyennete_sejour',
+    'quick_mitoyennete_chambres',
+    'quick_humidite_odeur',
+    'quick_facade_eaux',
+    'quick_chaudiere',
+    'quick_charges',
+    'quick_clauses',
+    'quick_offre',
+    'quick_preference_autre_bien',
+  ]) {
+    state = updateAnswer(state, id, 'ok');
+  }
+  assert.equal(getQuickVerdict(state).level, 'go');
+
+  state = updateAnswer(state, 'quick_charges', 'doute');
+  assert.equal(getQuickVerdict(state).level, 'pause');
+});
+
 test('ChatGPT export is strict, complete, and anonymized', () => {
   let state = createInitialState(sections, scoringCriteria);
   state = updateAnswer(state, 'eau_stagne_facade', 'mauvais', 'Eau visible contre le mur après pluie.');
@@ -92,6 +132,8 @@ test('ChatGPT export is strict, complete, and anonymized', () => {
 
   assert.match(exportText, /Sois critique, honnête et exigeant/);
   assert.match(exportText, /Ne me rassure pas artificiellement/);
+  assert.match(exportText, /Verdict rapide/);
+  assert.match(exportText, /Preuves écrites/);
   assert.match(exportText, /Eau visible contre le mur/);
   assert.equal(exportText.includes('ville exacte'), false);
   assert.equal(exportText.includes('prénom'), false);

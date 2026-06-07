@@ -72,6 +72,22 @@ const blockerField = (id) => ({
   options: yesNoGoodNo,
 });
 
+const proofFields = (id, label) => [
+  {
+    id: `preuve_oral_${id}`,
+    type: 'choice',
+    label: `Oralement rassuré : ${label}`,
+    options: neutralYesNo,
+  },
+  {
+    id: `preuve_ecrit_${id}`,
+    type: 'choice',
+    label: `Preuve écrite reçue : ${label}`,
+    required: true,
+    options: yesNo('warning'),
+  },
+];
+
 export const quickBlockers = [
   { id: 'quick_bruit_voisinage', type: 'choice', label: 'Bruit / voisinage', important: true, blocksDecision: true, options: okDoubtBad },
   { id: 'quick_mitoyennete_sejour', type: 'choice', label: 'Mitoyenneté séjour', important: true, blocksDecision: true, options: okDoubtBad },
@@ -447,6 +463,7 @@ export const sections = [
     intro: "Attends la fin. Ne fais pas un interrogatoire avant d'avoir vu le bien, mais ne repars pas sans les réponses clés.",
     reminders: [
       "À ne pas quitter sans réponse : date limite offre, ordre d'arrivée, charges, clauses, taxe foncière, diagnostics.",
+      'Pas écrit = pas sécurisé.',
     ],
     fields: [
       { id: 'date_limite_offre', type: 'text', label: "Date limite pour déposer une offre", placeholder: 'Date / heure / flou', important: true },
@@ -490,6 +507,14 @@ export const sections = [
         placeholder: "Diagnostics, taxe foncière, sinistres, infiltration, assurance.",
         important: true,
       },
+      ...proofFields('diagnostics', 'diagnostics'),
+      ...proofFields('taxe_fonciere', 'taxe foncière'),
+      ...proofFields('charges_asl', 'charges ASL'),
+      ...proofFields('reglement_lotissement', 'règlement lotissement'),
+      ...proofFields('clauses_revente_location', 'clauses revente / location'),
+      ...proofFields('entretien_chaudiere', 'entretien chaudière'),
+      ...proofFields('factures_energie', 'factures énergie'),
+      ...proofFields('sinistres_infiltrations', 'sinistres / infiltrations'),
       blockerField('bloquant_administratif'),
     ],
   },
@@ -553,8 +578,15 @@ export const sections = [
       {
         id: 'prix_max_collegue',
         type: 'text',
-        label: "Prix max que l'accompagnant mettrait",
+        label: "Prix max que l'accompagnant mettrait à ma place",
         placeholder: 'Montant en euros',
+        important: true,
+      },
+      {
+        id: 'regret_minimise_6_mois',
+        type: 'textarea',
+        label: "Dans 6 mois, qu'est-ce que je pourrais regretter d'avoir minimisé ?",
+        placeholder: 'Bruit, humidité, budget, clauses, voisinage, pression.',
         important: true,
       },
       {
@@ -610,6 +642,8 @@ export const sections = [
       "Scénario C : bruit, humidité, eau mal évacuée, charges inconnues, clauses contraignantes, mauvais feeling.",
       "Question anti-panique : est-ce que je veux faire une offre parce que le bien est vraiment bon, ou parce que j'ai peur de rater ?",
       "Pas d'offre depuis le parking en panique : débrief, export ChatGPT, relecture à froid et financement avant envoi.",
+      "Ne pas confondre opportunité rare et bonne décision.",
+      "Décision interdite si : voisinage douteux, humidité douteuse, charges non écrites, clauses non écrites, pression temporelle ou peur de rater.",
     ],
     fields: [
       {
@@ -642,13 +676,28 @@ export const sections = [
       { id: 'cash_peinture_deco', type: 'text', label: 'Cash : peinture / déco', placeholder: '€' },
       { id: 'cash_exterieur', type: 'text', label: 'Cash : extérieur', placeholder: '€' },
       { id: 'cash_chaudiere_moyen_terme', type: 'text', label: 'Cash : chaudière à moyen terme', placeholder: '€' },
-      { id: 'cash_emmenagement', type: 'text', label: 'Cash : frais emménagement', placeholder: '€' },
+      { id: 'cash_emmenagement', type: 'text', label: 'Cash : frais déménagement', placeholder: '€' },
       { id: 'cash_meubles_luminaires', type: 'text', label: 'Cash : meubles / luminaires', placeholder: '€' },
+      { id: 'cash_imprevus', type: 'text', label: 'Cash : imprévus / matelas sécurité', placeholder: '€' },
       { id: 'cash_total_prevoir', type: 'text', label: 'Total cash à prévoir', placeholder: '€', important: true },
       { id: 'comparaison_cout_mensuel', type: 'text', label: "Comparaison : coût mensuel ce bien vs l'autre bien", placeholder: 'Ce bien / autre bien' },
+      { id: 'comparaison_surface', type: 'text', label: "Comparaison : surface ce bien vs l'autre bien", placeholder: 'Ce bien / autre bien' },
+      { id: 'comparaison_dette', type: 'choice', label: 'Comparaison : dette avec ce bien', options: yesWarnNo },
+      { id: 'comparaison_apport_conserve', type: 'choice', label: 'Comparaison : apport conservé avec ce bien', options: yesNo('warning') },
       { id: 'comparaison_stress_financier', type: 'choice', label: 'Stress financier de ce bien', options: weakMediumStrongRisk },
       { id: 'comparaison_liberte_future', type: 'choice', label: 'Liberté future avec ce bien', options: goodMediumWeak },
+      { id: 'comparaison_patrimoine', type: 'choice', label: 'Comparaison : patrimoine créé par ce bien', options: yesNo('warning') },
       { id: 'regret_si_autre_bien', type: 'choice', label: "Si l'autre bien était attribué, regretterais-je d'avoir choisi ce bien ?", options: yesNoGoodNo },
+      {
+        id: 'decision_demain_matin',
+        type: 'choice',
+        label: 'Si je relis ça demain matin, serai-je fier de cette décision ?',
+        options: [
+          { value: 'oui', label: 'Oui' },
+          { value: 'non', label: 'Non', severity: 'red' },
+          { value: 'incertain', label: 'Je ne sais pas', severity: 'warning' },
+        ],
+      },
       {
         id: 'prix_max_froid',
         type: 'text',

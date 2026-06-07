@@ -7,6 +7,7 @@ import {
   formatAnswer,
   generateChatGptExport,
   generatePostVisitEmail,
+  getQuickVerdict,
   getProgress,
   getSectionStatus,
   getSummary,
@@ -24,6 +25,7 @@ const app = document.querySelector('#app');
 
 let menuOpen = false;
 let saveStatus = 'Sauvegardé sur cet appareil';
+let quickOpen = false;
 let photoOpen = false;
 let state = loadState();
 
@@ -76,6 +78,16 @@ app.addEventListener('click', async (event) => {
   if (action === 'go-section') {
     menuOpen = false;
     goToSection(Number(button.dataset.index));
+  }
+
+  if (action === 'open-quick') {
+    quickOpen = true;
+    render();
+  }
+
+  if (action === 'close-quick') {
+    quickOpen = false;
+    render();
   }
 
   if (action === 'answer') {
@@ -138,9 +150,10 @@ function render() {
   const section = sections[state.currentSection] ?? sections[0];
   const progress = getProgress(sections, state);
   const summary = getSummary(reportSections, scoringCriteria, state);
+  const quick = getQuickVerdict(state);
 
   app.innerHTML = `
-    ${renderTopBar(progress)}
+    ${renderTopBar(progress, quick)}
     <section class="step-panel ${section.critical ? 'is-critical' : ''}">
       <div class="step-meta">
         <span>${section.number}</span>
@@ -155,6 +168,7 @@ function render() {
     ${state.currentSection === sections.length - 1 ? renderSummary(summary) : ''}
     ${renderBottomNav()}
     ${menuOpen ? renderStepMenu() : ''}
+    ${quickOpen ? renderQuickModal() : ''}
     ${photoOpen ? renderPhotoModal() : ''}
   `;
 }
@@ -162,6 +176,7 @@ function render() {
 function renderHome() {
   const progress = getProgress(sections, state);
   const hasProgress = progress.answered > 0;
+  const quick = getQuickVerdict(state);
 
   return `
     <section class="home">
@@ -172,10 +187,11 @@ function renderHome() {
         <button class="primary-action" type="button" data-action="${hasProgress ? 'resume' : 'start'}">
           ${hasProgress ? "Reprendre où j'étais" : 'Démarrer la visite'}
         </button>
+        <button class="secondary-action" type="button" data-action="open-quick">10 points</button>
         <button class="secondary-action" type="button" data-action="open-steps">Étapes</button>
         <button class="secondary-action" type="button" data-action="open-photos">Photos</button>
       </div>
-      ${renderQuickMode()}
+      ${renderQuickMode(false, quick)}
       ${renderPhotoChecklist(false)}
       <div class="guardrails">
         <p>Un point flou n'est pas un point rassurant.</p>
@@ -185,11 +201,12 @@ function renderHome() {
       <button class="text-action" type="button" data-action="reset">Réinitialiser les réponses locales</button>
     </section>
     ${menuOpen ? renderStepMenu() : ''}
+    ${quickOpen ? renderQuickModal() : ''}
     ${photoOpen ? renderPhotoModal() : ''}
   `;
 }
 
-function renderTopBar(progress) {
+function renderTopBar(progress, quick) {
   return `
     <header class="topbar">
       <div>
@@ -199,6 +216,7 @@ function renderTopBar(progress) {
       <div class="progress-track" aria-label="Progression ${progress.percent}%">
         <span style="width:${progress.percent}%"></span>
       </div>
+      <button class="step-button quick-trigger ${quick.level}" type="button" data-action="open-quick">10 points</button>
       <button class="step-button" type="button" data-action="open-steps">Étapes</button>
       <button class="step-button" type="button" data-action="open-photos">Photos</button>
       <p id="saveStatus" class="save-status">${escapeHtml(saveStatus)}</p>
@@ -206,16 +224,29 @@ function renderTopBar(progress) {
   `;
 }
 
-function renderQuickMode() {
+function renderQuickMode(inModal = false, quick = getQuickVerdict(state)) {
   return `
-    <section class="quick-panel">
+    <section class="${inModal ? 'quick-panel in-modal' : 'quick-panel'}">
       <div class="quick-head">
         <span>Mode rapide</span>
         <strong>10 points bloquants</strong>
       </div>
-      <p>À utiliser si la visite est groupée, courte ou stressante. Si un point est mauvais, il passe avant la moyenne.</p>
+      ${renderQuickStatus(quick)}
+      <p>Si un point est mauvais, pas d'offre sans preuve ou clarification.</p>
       <div class="fields compact">${quickBlockers.map((field) => renderField(field)).join('')}</div>
     </section>
+  `;
+}
+
+function renderQuickStatus(quick) {
+  return `
+    <div class="quick-status ${quick.level}">
+      <strong>${escapeHtml(quick.label)}</strong>
+      <span>Mauvais : ${quick.counts.bad}</span>
+      <span>Doutes : ${quick.counts.doubt}</span>
+      <span>Non renseignés : ${quick.counts.missing}</span>
+      <p>${escapeHtml(quick.reason)}</p>
+    </div>
   `;
 }
 
@@ -333,6 +364,7 @@ function renderBottomNav() {
   return `
     <nav class="bottom-nav" aria-label="Navigation visite">
       <button class="secondary-action" type="button" data-action="prev" aria-label="Étape précédente" ${state.currentSection === 0 ? 'disabled' : ''}>Préc.</button>
+      <button class="secondary-action" type="button" data-action="open-quick">10 points</button>
       <button class="secondary-action" type="button" data-action="open-steps">Étapes</button>
       <button class="secondary-action" type="button" data-action="open-photos">Photos</button>
       <button class="primary-action" type="button" data-action="next" aria-label="Étape suivante" ${state.currentSection === sections.length - 1 ? 'disabled' : ''}>Suiv.</button>
@@ -367,6 +399,20 @@ function renderStepMenu() {
   `;
 }
 
+function renderQuickModal() {
+  return `
+    <div class="modal-backdrop">
+      <section class="step-menu quick-dialog" role="dialog" aria-modal="true" aria-label="10 points bloquants">
+        <div class="menu-head">
+          <h2>10 points bloquants</h2>
+          <button class="text-action" type="button" data-action="close-quick">Fermer</button>
+        </div>
+        ${renderQuickMode(true)}
+      </section>
+    </div>
+  `;
+}
+
 function renderPhotoModal() {
   return `
     <div class="modal-backdrop">
@@ -395,6 +441,8 @@ function renderPhotoChecklist(inModal) {
 }
 
 function renderSummary(summary) {
+  const quick = getQuickVerdict(state);
+
   return `
     <section class="summary-panel" id="summary">
       <div class="summary-head">
@@ -404,6 +452,13 @@ function renderSummary(summary) {
       <div class="decision ${summary.decision.level}">
         <h2>${escapeHtml(summary.decision.label)}</h2>
         <p>${escapeHtml(summary.decision.reason)}</p>
+      </div>
+      <div class="decision ${quick.level}">
+        <h2>Verdict rapide : ${escapeHtml(quick.label)}</h2>
+        <p>${escapeHtml(quick.reason)}</p>
+        <div class="summary-mini-actions">
+          <button class="secondary-action" type="button" data-action="open-quick">10 points</button>
+        </div>
       </div>
       ${renderIssueList('Red flags détectés', summary.redFlags, 'red')}
       ${renderIssueList('Points flous / manquants', [...summary.warnings, ...summary.missingCritical], 'warning')}
@@ -596,4 +651,5 @@ window.__VISIT_APP__ = {
   collectRedFlags,
   collectWarnings,
   formatAnswer,
+  getQuickVerdict,
 };

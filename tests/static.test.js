@@ -48,3 +48,15 @@ test('app exposes full print report and post-visit email action', () => {
   assert.match(js, /renderPrintableReport/);
   assert.match(js, /copy-email/);
 });
+
+test('app exposes ten point quick access from active visit surfaces', () => {
+  const js = readFileSync(new URL('../app.js', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+
+  assert.match(js, /open-quick/);
+  assert.match(js, /renderQuickModal/);
+  assert.match(js, /renderQuickStatus/);
+  assert.match(js, /10 points/);
+  assert.match(css, /\.quick-status/);
+  assert.match(css, /\.bottom-nav/);
+});
