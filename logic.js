@@ -88,7 +88,7 @@ export function getSummary(sections, scoringCriteria, state) {
   const redFlags = collectRedFlags(sections, state);
   const warnings = collectWarnings(sections, state);
   const missingCritical = collectMissingCritical(sections, state);
-  const decision = getStrictDecision({ average, scores, redFlags, warnings, state });
+  const decision = getStrictDecision({ average, scores, redFlags, warnings, missingCritical, state });
 
   return {
     progress: getProgress(sections, state),
@@ -118,7 +118,7 @@ export function collectMissingCritical(sections, state) {
     }
 
     for (const field of section.fields) {
-      if (field.required && !hasAnswer(state, field.id)) {
+      if ((field.required || field.important) && !hasAnswer(state, field.id) && !hasNote(state, field.id)) {
         missing.push({
           section: `${section.number}. ${section.title}`,
           label: field.label,
@@ -162,7 +162,7 @@ export function generateChatGptExport(sections, scoringCriteria, state) {
       const value = state?.answers?.[field.id];
       const note = state?.notes?.[field.id];
       if (!hasAnswer(state, field.id) && !note) {
-        if (field.required && section.critical) {
+        if ((field.required || field.important) && section.critical) {
           lines.push(`- ${field.label}: NON RENSEIGNÉ`);
         }
         continue;
@@ -180,6 +180,56 @@ export function generateChatGptExport(sections, scoringCriteria, state) {
     '## Demande',
     "Analyse froidement ces notes. Dis-moi ce qui bloque, ce qui doit être prouvé par document, ce que je pourrais minimiser, et quelle décision rationnelle ressort.",
   );
+
+  return lines.join('\n');
+}
+
+export function generatePostVisitEmail(sections, state) {
+  const requested = new Set([
+    'diagnostics complets',
+    'taxe foncière',
+    'charges ASL / lotissement',
+    'règlement du lotissement',
+    'conditions de revente',
+    "certificat d'entretien chaudière",
+    'factures énergie',
+    'historique des sinistres',
+  ]);
+
+  if (state?.answers?.diagnostics_disponibles === 'oui') {
+    requested.delete('diagnostics complets');
+  }
+  if (hasAnswer(state, 'taxe_fonciere')) {
+    requested.delete('taxe foncière');
+  }
+  if (state?.answers?.certificat_entretien === 'oui') {
+    requested.delete("certificat d'entretien chaudière");
+  }
+  if (state?.answers?.factures_energie === 'oui') {
+    requested.delete('factures énergie');
+  }
+
+  const missingAdmin = collectMissingCritical(sections, state)
+    .filter((item) => item.section.startsWith('10.'))
+    .map((item) => item.label);
+
+  const requestedItems = [...new Set([
+    ...requested,
+    ...missingAdmin.slice(0, 8),
+  ])];
+
+  const lines = [
+    'Bonjour,',
+    '',
+    'Merci pour la visite.',
+    "Avant de me positionner proprement, pourriez-vous me transmettre ou confirmer les éléments suivants :",
+    '',
+    ...requestedItems.map((item) => `- ${item}`),
+    '',
+    "Cela me permettra de faire une offre sérieuse avec tous les éléments écrits, plutôt qu'une décision précipitée.",
+    '',
+    'Bonne journée,',
+  ];
 
   return lines.join('\n');
 }
@@ -222,8 +272,13 @@ export function formatAnswer(field, value) {
   return option?.label ?? String(value);
 }
 
-function getStrictDecision({ average, scores, redFlags, warnings, state }) {
+function getStrictDecision({ average, scores, redFlags, warnings, missingCritical, state }) {
   const scoreMap = Object.fromEntries(scores.map((score) => [score.id, score.value]));
+  const immediateBlocker = redFlags.find((issue) => issue.blocksDecision);
+
+  if (immediateBlocker) {
+    return { level: 'stop', label: 'Ne pas acheter', reason: `bloquant immédiat : ${immediateBlocker.label}.` };
+  }
 
   if (isBelow(scoreMap.calme_voisinage, 7)) {
     return { level: 'stop', label: 'Ne pas acheter', reason: 'Voisinage / calme sous 7 : règle dure bloquante.' };
@@ -251,6 +306,10 @@ function getStrictDecision({ average, scores, redFlags, warnings, state }) {
 
   if (redFlags.length > 0) {
     return { level: 'pause', label: 'Temporiser', reason: 'Un ou plusieurs red flags doivent être levés avant décision.' };
+  }
+
+  if (missingCritical.length > 0) {
+    return { level: 'pause', label: 'Décision incomplète', reason: `${missingCritical.length} informations critiques manquantes : pas d'offre possible sans preuve.` };
   }
 
   if (average !== null && average > 8 && warnings.length === 0) {
@@ -284,6 +343,8 @@ function collectFieldIssues(sections, state, severity) {
           value: formatAnswer(field, value),
           note: state?.notes?.[field.id] ?? '',
           severity,
+          fieldId: field.id,
+          blocksDecision: field.blocksDecision === true,
         });
       }
     }

@@ -11,9 +11,18 @@ https://quentinvg.github.io/visite-immo-checklist/
 ## Utilisation
 
 1. Ouvrir la page avant la visite pour charger les fichiers.
-2. Remplir les étapes dans l'ordre ou utiliser le bouton `Étapes` si la visite ne suit pas le déroulé prévu.
-3. Laisser les réponses s'enregistrer automatiquement dans `localStorage`.
-4. À la fin, utiliser `Copier pour ChatGPT`, `Imprimer / PDF` ou `Télécharger sauvegarde JSON`.
+2. Utiliser le `Mode rapide` si la visite est groupée ou trop courte : les 10 points bloquants passent avant le reste.
+3. Remplir les étapes dans l'ordre ou utiliser le bouton `Étapes` si la visite ne suit pas le déroulé prévu.
+4. Ouvrir `Photos` pour cocher les preuves à prendre pendant la visite.
+5. Laisser les réponses s'enregistrer automatiquement dans `localStorage`.
+6. À la fin, utiliser `Copier pour ChatGPT`, `Copier mail post-visite`, `Imprimer / PDF` ou `Télécharger sauvegarde JSON`.
+
+## Décision
+
+- Un champ `Bloquant immédiat ?` marqué oui stoppe la décision, même avec une bonne moyenne.
+- Les champs critiques ou importants non remplis empêchent une offre ferme.
+- Les notes sont volontairement exigeantes : un point flou doit être prouvé, pas rationalisé.
+- L'impression PDF génère le rapport complet avec le mode rapide, les photos, les réponses et les notes.
 
 ## Limites
 

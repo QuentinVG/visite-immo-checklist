@@ -35,3 +35,16 @@ test('README documents local-only storage and GitHub Pages usage', () => {
   assert.match(readme, /localStorage/);
   assert.match(readme, /Copier pour ChatGPT/);
 });
+
+test('app initializes save status before localStorage access', () => {
+  const js = readFileSync(new URL('../app.js', import.meta.url), 'utf8');
+
+  assert.ok(js.indexOf('let saveStatus') < js.indexOf('let state = loadState()'));
+});
+
+test('app exposes full print report and post-visit email action', () => {
+  const js = readFileSync(new URL('../app.js', import.meta.url), 'utf8');
+
+  assert.match(js, /renderPrintableReport/);
+  assert.match(js, /copy-email/);
+});

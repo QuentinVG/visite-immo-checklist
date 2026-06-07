@@ -62,6 +62,44 @@ const lowMediumHighMaintenance = [
   { value: 'eleve', label: 'Élevé', severity: 'warning' },
 ];
 
+const blockerField = (id) => ({
+  id,
+  type: 'choice',
+  label: 'Bloquant immédiat ?',
+  required: false,
+  important: true,
+  blocksDecision: true,
+  options: yesNoGoodNo,
+});
+
+export const quickBlockers = [
+  { id: 'quick_bruit_voisinage', type: 'choice', label: 'Bruit / voisinage', important: true, blocksDecision: true, options: okDoubtBad },
+  { id: 'quick_mitoyennete_sejour', type: 'choice', label: 'Mitoyenneté séjour', important: true, blocksDecision: true, options: okDoubtBad },
+  { id: 'quick_mitoyennete_chambres', type: 'choice', label: 'Mitoyenneté chambres', important: true, blocksDecision: true, options: okDoubtBad },
+  { id: 'quick_humidite_odeur', type: 'choice', label: 'Humidité / odeur', important: true, blocksDecision: true, options: okDoubtBad },
+  { id: 'quick_facade_eaux', type: 'choice', label: 'Façade / traces noires / eaux pluviales', important: true, blocksDecision: true, options: okDoubtBad },
+  { id: 'quick_chaudiere', type: 'choice', label: 'Chaudière : année + entretien clairs', important: true, blocksDecision: true, options: okDoubtBad },
+  { id: 'quick_charges', type: 'choice', label: 'Charges ASL / lotissement', important: true, blocksDecision: true, options: okDoubtBad },
+  { id: 'quick_clauses', type: 'choice', label: 'Clauses revente / location future', important: true, blocksDecision: true, options: okDoubtBad },
+  { id: 'quick_offre', type: 'choice', label: "Date limite offre / ordre d'arrivée", important: true, blocksDecision: true, options: okDoubtBad },
+  { id: 'quick_preference_autre_bien', type: 'choice', label: "Préférence réelle vs l'autre bien", important: true, blocksDecision: true, options: okDoubtBad },
+];
+
+export const photoChecklist = [
+  { id: 'photo_facade_avant', type: 'choice', label: 'Façade avant', options: yesNo('warning') },
+  { id: 'photo_facade_jardin', type: 'choice', label: 'Façade jardin', options: yesNo('warning') },
+  { id: 'photo_bas_mur_noirci', type: 'choice', label: 'Bas de mur noirci', options: yesNo('warning') },
+  { id: 'photo_gouttieres', type: 'choice', label: 'Gouttières / descentes', options: yesNo('warning') },
+  { id: 'photo_dalle_evacuation', type: 'choice', label: 'Dalle / évacuation eau', options: yesNo('warning') },
+  { id: 'photo_chaudiere_plaque', type: 'choice', label: 'Chaudière + plaque modèle', options: yesNo('warning') },
+  { id: 'photo_tableau_electrique', type: 'choice', label: 'Tableau électrique', options: yesNo('warning') },
+  { id: 'photo_garage_sol_murs', type: 'choice', label: 'Garage sol / murs', options: yesNo('warning') },
+  { id: 'photo_murs_mitoyens', type: 'choice', label: 'Murs mitoyens', options: yesNo('warning') },
+  { id: 'photo_vmc_sdb', type: 'choice', label: 'VMC salle de bain', options: yesNo('warning') },
+  { id: 'photo_fissures', type: 'choice', label: 'Fissures éventuelles', options: yesNo('warning') },
+  { id: 'photo_jardin_visavis', type: 'choice', label: 'Jardin / vis-à-vis', options: yesNo('warning') },
+];
+
 export const sections = [
   {
     id: 'avant_arriver',
@@ -138,6 +176,7 @@ export const sections = [
         placeholder: "Ne lisse pas ton ressenti. Note ce qui dérange.",
         important: true,
       },
+      blockerField('bloquant_lotissement'),
     ],
   },
   {
@@ -191,6 +230,7 @@ export const sections = [
         placeholder: 'Vrai plus quotidien ou petit extérieur moyen ?',
         important: true,
       },
+      blockerField('bloquant_exterieur'),
     ],
   },
   {
@@ -223,6 +263,7 @@ export const sections = [
         placeholder: 'Odeur, froid, malaise, sensation saine ou non.',
         important: true,
       },
+      blockerField('bloquant_entree'),
     ],
   },
   {
@@ -248,6 +289,7 @@ export const sections = [
         placeholder: 'Ce que j’entends et quel mur est mitoyen exactement.',
         important: true,
       },
+      blockerField('bloquant_sejour'),
     ],
   },
   {
@@ -287,6 +329,7 @@ export const sections = [
         placeholder: "Entretien, pannes, factures, remplacement 3k-6k à prévoir si historique flou.",
         important: true,
       },
+      blockerField('bloquant_garage_technique'),
     ],
   },
   {
@@ -341,6 +384,7 @@ export const sections = [
         placeholder: 'Bruit, mur mitoyen et note calme /10 pour chaque chambre.',
         important: true,
       },
+      blockerField('bloquant_chambres'),
     ],
   },
   {
@@ -367,6 +411,7 @@ export const sections = [
         placeholder: "VMC individuelle ? Problèmes d'humidité passés ? Résultat test mouchoir.",
         important: true,
       },
+      blockerField('bloquant_salle_bain'),
     ],
   },
   {
@@ -390,6 +435,7 @@ export const sections = [
         placeholder: 'Pièces testées, bruit, condensation, joints, défauts.',
         important: true,
       },
+      blockerField('bloquant_fenetres'),
     ],
   },
   {
@@ -399,6 +445,9 @@ export const sections = [
     critical: true,
     badge: 'Juridique',
     intro: "Attends la fin. Ne fais pas un interrogatoire avant d'avoir vu le bien, mais ne repars pas sans les réponses clés.",
+    reminders: [
+      "À ne pas quitter sans réponse : date limite offre, ordre d'arrivée, charges, clauses, taxe foncière, diagnostics.",
+    ],
     fields: [
       { id: 'date_limite_offre', type: 'text', label: "Date limite pour déposer une offre", placeholder: 'Date / heure / flou', important: true },
       { id: 'ordre_arrivee_offres', type: 'choice', label: "Offres traitées dans l'ordre d'arrivée ?", required: true, options: neutralYesNo },
@@ -441,6 +490,7 @@ export const sections = [
         placeholder: "Diagnostics, taxe foncière, sinistres, infiltration, assurance.",
         important: true,
       },
+      blockerField('bloquant_administratif'),
     ],
   },
   {
@@ -490,6 +540,24 @@ export const sections = [
       { id: 'pret_budget_mensuel', type: 'choice', label: 'Je suis prêt à payer 1 100-1 250 €/mois pour ça ?', required: true, options: yesNo('red') },
       { id: 'envie_rester_8_ans', type: 'choice', label: "J'ai envie d'y rester 8 ans minimum ?", required: true, options: yesNo('red') },
       {
+        id: 'collegue_acheterait',
+        type: 'choice',
+        label: "Est-ce que l'accompagnant l'achèterait à ma place ?",
+        required: true,
+        options: [
+          { value: 'oui', label: 'Oui' },
+          { value: 'decote', label: 'Seulement avec décote', severity: 'warning' },
+          { value: 'non', label: 'Non', severity: 'red' },
+        ],
+      },
+      {
+        id: 'prix_max_collegue',
+        type: 'text',
+        label: "Prix max que l'accompagnant mettrait",
+        placeholder: 'Montant en euros',
+        important: true,
+      },
+      {
         id: 'avis_collegue',
         type: 'textarea',
         label: "Avis froid de l'accompagnant",
@@ -503,6 +571,7 @@ export const sections = [
         placeholder: 'Ce qu’il voit que je pourrais minimiser.',
         important: true,
       },
+      blockerField('bloquant_debrief'),
     ],
   },
   {
@@ -539,6 +608,8 @@ export const sections = [
       'Scénario A : calme, sain, documents clairs, charges faibles, clauses non bloquantes, préférence nette.',
       "Scénario B : correct mais pas évident, défauts, chaudière ancienne, documents manquants, hésitation.",
       "Scénario C : bruit, humidité, eau mal évacuée, charges inconnues, clauses contraignantes, mauvais feeling.",
+      "Question anti-panique : est-ce que je veux faire une offre parce que le bien est vraiment bon, ou parce que j'ai peur de rater ?",
+      "Pas d'offre depuis le parking en panique : débrief, export ChatGPT, relecture à froid et financement avant envoi.",
     ],
     fields: [
       {
@@ -566,6 +637,18 @@ export const sections = [
         placeholder: 'Montant ou fourchette froide',
         important: true,
       },
+      { id: 'cash_travaux_immediats', type: 'text', label: 'Cash : travaux immédiats', placeholder: '€' },
+      { id: 'cash_cuisine_electro', type: 'text', label: 'Cash : cuisine / électroménager', placeholder: '€' },
+      { id: 'cash_peinture_deco', type: 'text', label: 'Cash : peinture / déco', placeholder: '€' },
+      { id: 'cash_exterieur', type: 'text', label: 'Cash : extérieur', placeholder: '€' },
+      { id: 'cash_chaudiere_moyen_terme', type: 'text', label: 'Cash : chaudière à moyen terme', placeholder: '€' },
+      { id: 'cash_emmenagement', type: 'text', label: 'Cash : frais emménagement', placeholder: '€' },
+      { id: 'cash_meubles_luminaires', type: 'text', label: 'Cash : meubles / luminaires', placeholder: '€' },
+      { id: 'cash_total_prevoir', type: 'text', label: 'Total cash à prévoir', placeholder: '€', important: true },
+      { id: 'comparaison_cout_mensuel', type: 'text', label: "Comparaison : coût mensuel ce bien vs l'autre bien", placeholder: 'Ce bien / autre bien' },
+      { id: 'comparaison_stress_financier', type: 'choice', label: 'Stress financier de ce bien', options: weakMediumStrongRisk },
+      { id: 'comparaison_liberte_future', type: 'choice', label: 'Liberté future avec ce bien', options: goodMediumWeak },
+      { id: 'regret_si_autre_bien', type: 'choice', label: "Si l'autre bien était attribué, regretterais-je d'avoir choisi ce bien ?", options: yesNoGoodNo },
       {
         id: 'prix_max_froid',
         type: 'text',
@@ -573,6 +656,7 @@ export const sections = [
         placeholder: 'Maximum à ne pas dépasser',
         important: true,
       },
+      blockerField('bloquant_decision'),
     ],
   },
   {

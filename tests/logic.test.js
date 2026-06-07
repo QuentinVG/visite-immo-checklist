@@ -8,6 +8,7 @@ import {
   getSectionStatus,
   getSummary,
   generateChatGptExport,
+  generatePostVisitEmail,
   serializeState,
   parseState,
 } from '../logic.js';
@@ -49,6 +50,39 @@ test('unclear clauses block a firm offer', () => {
   assert.match(summary.decision.reason, /Clauses/);
 });
 
+test('high scores cannot allow an offer when critical fields are missing', () => {
+  let state = createInitialState(sections, scoringCriteria);
+  for (const criterion of scoringCriteria) {
+    state = updateAnswer(state, `score_${criterion.id}`, 9);
+  }
+
+  const summary = getSummary(sections, scoringCriteria, state);
+
+  assert.equal(summary.decision.level, 'pause');
+  assert.match(summary.decision.reason, /critiques manquantes/);
+  assert.ok(summary.missingCritical.length > 0);
+});
+
+test('important blank text fields are treated as missing critical information', () => {
+  const state = createInitialState(sections, scoringCriteria);
+  const summary = getSummary(sections, scoringCriteria, state);
+
+  assert.ok(summary.missingCritical.some((item) => item.label === 'Note mentale avant visite'));
+});
+
+test('immediate blocker field stops the decision regardless of score', () => {
+  let state = createInitialState(sections, scoringCriteria);
+  for (const criterion of scoringCriteria) {
+    state = updateAnswer(state, `score_${criterion.id}`, 9);
+  }
+  state = updateAnswer(state, 'bloquant_lotissement', 'oui');
+
+  const summary = getSummary(sections, scoringCriteria, state);
+
+  assert.equal(summary.decision.level, 'stop');
+  assert.match(summary.decision.reason, /bloquant immédiat/);
+});
+
 test('ChatGPT export is strict, complete, and anonymized', () => {
   let state = createInitialState(sections, scoringCriteria);
   state = updateAnswer(state, 'eau_stagne_facade', 'mauvais', 'Eau visible contre le mur après pluie.');
@@ -62,6 +96,16 @@ test('ChatGPT export is strict, complete, and anonymized', () => {
   assert.equal(exportText.includes('ville exacte'), false);
   assert.equal(exportText.includes('prénom'), false);
   assert.equal(exportText.includes('nom du vendeur'), false);
+});
+
+test('post-visit email asks for missing proof documents', () => {
+  const state = createInitialState(sections, scoringCriteria);
+  const email = generatePostVisitEmail(sections, state);
+
+  assert.match(email, /diagnostics complets/);
+  assert.match(email, /taxe foncière/);
+  assert.match(email, /certificat d'entretien chaudière/);
+  assert.match(email, /conditions de revente/);
 });
 
 test('state serialization round-trips safely', () => {

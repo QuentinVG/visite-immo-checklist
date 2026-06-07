@@ -1,4 +1,4 @@
-import { sections, scoringCriteria } from './data.js';
+import { photoChecklist, quickBlockers, sections, scoringCriteria } from './data.js';
 import {
   collectMissingCritical,
   collectRedFlags,
@@ -6,6 +6,7 @@ import {
   createInitialState,
   formatAnswer,
   generateChatGptExport,
+  generatePostVisitEmail,
   getProgress,
   getSectionStatus,
   getSummary,
@@ -16,11 +17,15 @@ import {
 } from './logic.js';
 
 const STORAGE_KEY = 'visite-immo-checklist-v1';
+const quickSection = { id: 'mode_rapide', number: 'R', title: 'Mode rapide : 10 points bloquants', critical: false, fields: quickBlockers };
+const photoSection = { id: 'photos', number: 'P', title: 'Photos à prendre', critical: false, fields: photoChecklist };
+const reportSections = [quickSection, photoSection, ...sections];
 const app = document.querySelector('#app');
 
-let state = loadState();
 let menuOpen = false;
 let saveStatus = 'Sauvegardé sur cet appareil';
+let photoOpen = false;
+let state = loadState();
 
 render();
 registerServiceWorker();
@@ -82,6 +87,20 @@ app.addEventListener('click', async (event) => {
     await copyExport();
   }
 
+  if (action === 'copy-email') {
+    await copyEmail();
+  }
+
+  if (action === 'open-photos') {
+    photoOpen = true;
+    render();
+  }
+
+  if (action === 'close-photos') {
+    photoOpen = false;
+    render();
+  }
+
   if (action === 'print') {
     window.print();
   }
@@ -118,7 +137,7 @@ function render() {
 
   const section = sections[state.currentSection] ?? sections[0];
   const progress = getProgress(sections, state);
-  const summary = getSummary(sections, scoringCriteria, state);
+  const summary = getSummary(reportSections, scoringCriteria, state);
 
   app.innerHTML = `
     ${renderTopBar(progress)}
@@ -136,6 +155,7 @@ function render() {
     ${state.currentSection === sections.length - 1 ? renderSummary(summary) : ''}
     ${renderBottomNav()}
     ${menuOpen ? renderStepMenu() : ''}
+    ${photoOpen ? renderPhotoModal() : ''}
   `;
 }
 
@@ -153,7 +173,10 @@ function renderHome() {
           ${hasProgress ? "Reprendre où j'étais" : 'Démarrer la visite'}
         </button>
         <button class="secondary-action" type="button" data-action="open-steps">Étapes</button>
+        <button class="secondary-action" type="button" data-action="open-photos">Photos</button>
       </div>
+      ${renderQuickMode()}
+      ${renderPhotoChecklist(false)}
       <div class="guardrails">
         <p>Un point flou n'est pas un point rassurant.</p>
         <p>Un red flag technique ou juridique bloque la décision.</p>
@@ -162,6 +185,7 @@ function renderHome() {
       <button class="text-action" type="button" data-action="reset">Réinitialiser les réponses locales</button>
     </section>
     ${menuOpen ? renderStepMenu() : ''}
+    ${photoOpen ? renderPhotoModal() : ''}
   `;
 }
 
@@ -176,8 +200,22 @@ function renderTopBar(progress) {
         <span style="width:${progress.percent}%"></span>
       </div>
       <button class="step-button" type="button" data-action="open-steps">Étapes</button>
+      <button class="step-button" type="button" data-action="open-photos">Photos</button>
       <p id="saveStatus" class="save-status">${escapeHtml(saveStatus)}</p>
     </header>
+  `;
+}
+
+function renderQuickMode() {
+  return `
+    <section class="quick-panel">
+      <div class="quick-head">
+        <span>Mode rapide</span>
+        <strong>10 points bloquants</strong>
+      </div>
+      <p>À utiliser si la visite est groupée, courte ou stressante. Si un point est mauvais, il passe avant la moyenne.</p>
+      <div class="fields compact">${quickBlockers.map((field) => renderField(field)).join('')}</div>
+    </section>
   `;
 }
 
@@ -294,9 +332,10 @@ function renderReminders(reminders = []) {
 function renderBottomNav() {
   return `
     <nav class="bottom-nav" aria-label="Navigation visite">
-      <button class="secondary-action" type="button" data-action="prev" ${state.currentSection === 0 ? 'disabled' : ''}>Précédent</button>
+      <button class="secondary-action" type="button" data-action="prev" aria-label="Étape précédente" ${state.currentSection === 0 ? 'disabled' : ''}>Préc.</button>
       <button class="secondary-action" type="button" data-action="open-steps">Étapes</button>
-      <button class="primary-action" type="button" data-action="next" ${state.currentSection === sections.length - 1 ? 'disabled' : ''}>Suivant</button>
+      <button class="secondary-action" type="button" data-action="open-photos">Photos</button>
+      <button class="primary-action" type="button" data-action="next" aria-label="Étape suivante" ${state.currentSection === sections.length - 1 ? 'disabled' : ''}>Suiv.</button>
     </nav>
   `;
 }
@@ -328,6 +367,33 @@ function renderStepMenu() {
   `;
 }
 
+function renderPhotoModal() {
+  return `
+    <div class="modal-backdrop">
+      <section class="step-menu" role="dialog" aria-modal="true" aria-label="Photos à prendre">
+        <div class="menu-head">
+          <h2>Photos à prendre</h2>
+          <button class="text-action" type="button" data-action="close-photos">Fermer</button>
+        </div>
+        ${renderPhotoChecklist(true)}
+      </section>
+    </div>
+  `;
+}
+
+function renderPhotoChecklist(inModal) {
+  return `
+    <section class="${inModal ? 'photo-panel in-modal' : 'photo-panel'}">
+      <div class="quick-head">
+        <span>Preuves</span>
+        <strong>Checklist photos</strong>
+      </div>
+      <p>Les photos évitent de reconstruire la visite avec le stress ou l’envie d’acheter.</p>
+      <div class="fields compact">${photoChecklist.map((field) => renderField(field)).join('')}</div>
+    </section>
+  `;
+}
+
 function renderSummary(summary) {
   return `
     <section class="summary-panel" id="summary">
@@ -343,11 +409,60 @@ function renderSummary(summary) {
       ${renderIssueList('Points flous / manquants', [...summary.warnings, ...summary.missingCritical], 'warning')}
       <div class="export-actions">
         <button class="primary-action" type="button" data-action="copy-export">Copier pour ChatGPT</button>
+        <button class="secondary-action" type="button" data-action="copy-email">Copier mail post-visite</button>
         <button class="secondary-action" type="button" data-action="print">Imprimer / PDF</button>
         <button class="secondary-action" type="button" data-action="download-json">Télécharger sauvegarde JSON</button>
       </div>
       <textarea id="exportFallback" class="export-fallback" readonly hidden></textarea>
+      ${renderPrintableReport(summary)}
     </section>
+  `;
+}
+
+function renderPrintableReport(summary) {
+  return `
+    <section class="print-report">
+      <h2>Rapport complet de visite</h2>
+      <p><strong>Verdict :</strong> ${escapeHtml(summary.decision.label)} - ${escapeHtml(summary.decision.reason)}</p>
+      <p><strong>Moyenne :</strong> ${summary.average === null ? 'Incomplète' : `${summary.average}/10`}</p>
+      <h3>Red flags</h3>
+      ${renderPrintIssues(summary.redFlags)}
+      <h3>Points flous / manquants</h3>
+      ${renderPrintIssues([...summary.warnings, ...summary.missingCritical])}
+      <h3>Réponses et notes</h3>
+      ${reportSections.map((section) => `
+        <section class="print-section">
+          <h4>${escapeHtml(section.number)}. ${escapeHtml(section.title)}</h4>
+          <ul>
+            ${section.fields.map((field) => `
+              <li>
+                <strong>${escapeHtml(field.label)} :</strong>
+                ${escapeHtml(formatAnswer(field, state.answers[field.id]))}
+                ${state.notes[field.id] ? `<br><em>Note : ${escapeHtml(state.notes[field.id])}</em>` : ''}
+              </li>
+            `).join('')}
+          </ul>
+        </section>
+      `).join('')}
+    </section>
+  `;
+}
+
+function renderPrintIssues(issues) {
+  if (issues.length === 0) {
+    return '<p>Aucun signal remonté.</p>';
+  }
+
+  return `
+    <ul>
+      ${issues.map((issue) => `
+        <li>
+          <strong>${escapeHtml(issue.section)} :</strong>
+          ${escapeHtml(issue.label)}
+          ${issue.value ? ` (${escapeHtml(issue.value)})` : ''}
+        </li>
+      `).join('')}
+    </ul>
   `;
 }
 
@@ -411,16 +526,25 @@ function loadState() {
 }
 
 async function copyExport() {
-  const exportText = generateChatGptExport(sections, scoringCriteria, state);
+  const exportText = generateChatGptExport(reportSections, scoringCriteria, state);
+  await writeTextWithFallback(exportText, 'Export copié pour ChatGPT');
+}
+
+async function copyEmail() {
+  const emailText = generatePostVisitEmail(reportSections, state);
+  await writeTextWithFallback(emailText, 'Mail post-visite copié');
+}
+
+async function writeTextWithFallback(text, successMessage) {
   const fallback = document.querySelector('#exportFallback');
 
   try {
-    await navigator.clipboard.writeText(exportText);
-    saveStatus = 'Export copié pour ChatGPT';
+    await navigator.clipboard.writeText(text);
+    saveStatus = successMessage;
     updateLiveStatus();
   } catch {
     fallback.hidden = false;
-    fallback.value = exportText;
+    fallback.value = text;
     fallback.focus();
     fallback.select();
     saveStatus = 'Copie impossible : texte affiché ci-dessous';

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { sections, scoringCriteria } from '../data.js';
+import { photoChecklist, quickBlockers, sections, scoringCriteria } from '../data.js';
 
 test('published content stays fully anonymized', () => {
   const content = JSON.stringify({ sections, scoringCriteria });
@@ -49,6 +49,35 @@ test('factual administrative yes answers are not automatic red flags', () => {
   assert.notEqual(getOption('ordre_arrivee_offres', 'oui').severity, 'red');
   assert.notEqual(getOption('residence_principale_obligation', 'oui').severity, 'red');
   assert.notEqual(getOption('asl_copro_charges', 'oui').severity, 'red');
+});
+
+test('quick group visit mode exposes the ten blocking points', () => {
+  assert.equal(quickBlockers.length, 10);
+  assert.deepEqual(quickBlockers.map((field) => field.id), [
+    'quick_bruit_voisinage',
+    'quick_mitoyennete_sejour',
+    'quick_mitoyennete_chambres',
+    'quick_humidite_odeur',
+    'quick_facade_eaux',
+    'quick_chaudiere',
+    'quick_charges',
+    'quick_clauses',
+    'quick_offre',
+    'quick_preference_autre_bien',
+  ]);
+});
+
+test('photo checklist covers technical proof shots', () => {
+  assert.equal(photoChecklist.length, 12);
+  assert.ok(photoChecklist.some((field) => field.label.includes('Chaudière')));
+  assert.ok(photoChecklist.some((field) => field.label.includes('VMC')));
+  assert.ok(photoChecklist.every((field) => field.type === 'choice'));
+});
+
+test('debrief captures colleague price and cold buy opinion separately', () => {
+  const fields = sections.flatMap((section) => section.fields);
+  assert.ok(fields.find((field) => field.id === 'prix_max_collegue'));
+  assert.ok(fields.find((field) => field.id === 'collegue_acheterait'));
 });
 
 function getOption(fieldId, value) {

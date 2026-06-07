@@ -177,13 +177,81 @@ blockquote {
   font-weight: 750;
 }
 
+.quick-panel,
+.photo-panel {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.quick-panel {
+  border-color: #99f6e4;
+  background: #f0fdfa;
+}
+
+.photo-panel {
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+
+.photo-panel.in-modal {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.quick-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.quick-head span {
+  color: var(--accent-dark);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.quick-head strong {
+  font-size: 1.05rem;
+}
+
+.quick-panel p,
+.photo-panel p {
+  margin-bottom: 0;
+}
+
+.fields.compact {
+  gap: 8px;
+}
+
+.fields.compact .field-card {
+  padding: 10px;
+}
+
+.fields.compact .field-head {
+  margin-bottom: 8px;
+}
+
+.fields.compact h2 {
+  font-size: 0.92rem;
+}
+
+.fields.compact .note-label textarea {
+  min-height: 64px;
+}
+
 .topbar {
   position: sticky;
   top: 0;
   z-index: 20;
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 10px;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 8px;
   align-items: center;
   margin: -12px -12px 12px;
   border-bottom: 1px solid var(--line);
@@ -194,6 +262,11 @@ blockquote {
 
 .topbar strong {
   display: block;
+}
+
+.topbar .step-button {
+  min-height: 40px;
+  padding: 8px 10px;
 }
 
 .progress-track {
@@ -372,12 +445,19 @@ textarea {
   left: 0;
   z-index: 30;
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   border-top: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.96);
   padding: 10px 12px;
   backdrop-filter: blur(12px);
+}
+
+.bottom-nav button {
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 6px;
+  font-size: 0.9rem;
 }
 
 .modal-backdrop {
@@ -390,10 +470,12 @@ textarea {
 }
 
 .step-menu {
+  width: min(760px, 100%);
   max-height: 86vh;
   overflow: auto;
   border-radius: 8px 8px 0 0;
   background: white;
+  margin: 0 auto;
   padding: 14px;
 }
 
@@ -550,6 +632,10 @@ textarea {
   min-height: 220px;
 }
 
+.print-report {
+  display: none;
+}
+
 @media (min-width: 720px) {
   .app-shell {
     padding-top: 20px;
@@ -565,7 +651,7 @@ textarea {
 
   .home-actions,
   .export-actions {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   }
 
   .bottom-nav {
@@ -601,5 +687,41 @@ textarea {
   .decision {
     box-shadow: none;
     break-inside: avoid;
+  }
+
+  .step-panel,
+  .summary-panel > :not(.print-report) {
+    display: none !important;
+  }
+
+  .summary-panel {
+    display: block;
+    border: 0;
+    padding: 0;
+  }
+
+  .print-report {
+    display: block;
+  }
+
+  .print-report h2,
+  .print-report h3,
+  .print-report h4 {
+    color: #111;
+  }
+
+  .print-section {
+    break-inside: avoid;
+    border-top: 1px solid #ddd;
+    padding-top: 8px;
+  }
+
+  .print-report ul {
+    padding-left: 18px;
+  }
+
+  .print-report li {
+    margin-bottom: 4px;
+    color: #222;
   }
 }
